@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Derivadas Directas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-5">
+    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-xl p-8">
+        <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">📚 Calculadora de Derivadas Directas</h1>
+        <p class="text-gray-600 text-center mb-8">Calcula derivadas usando reglas básicas: potencia, suma, constante, producto y cociente</p>
+
+        <!-- Entrada de función -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-semibold mb-2">Ingresa la función f(x):</label>
+            <input 
+                type="text" 
+                id="funcion" 
+                placeholder="Ej: 3x^2 + 5x - 7, 4x^3 - 2x, x^5/2" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+        </div>
+
+        <!-- Botón calcular -->
+        <button 
+            onclick="calcularDerivada()" 
+            class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 transition mb-6"
+        >
+            Calcular Derivada
+        </button>
+
+        <!-- Resultado -->
+        <div id="resultado" class="hidden mt-6 p-5 bg-indigo-50 rounded-lg border border-indigo-200">
+            <h3 class="text-xl font-bold text-indigo-800 mb-3">Resultado:</h3>
+            <div class="mb-2">
+                <span class="font-semibold">Función original: </span>
+                <span id="funcionOriginal" class="text-lg"></span>
+            </div>
+            <div class="mb-3">
+                <span class="font-semibold">Derivada f'(x): </span>
+                <span id="derivadaResultado" class="text-lg font-bold text-green-700"></span>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-700 mb-2">Explicación paso a paso:</h4>
+                <ul id="pasosExplicacion" class="list-disc list-inside text-gray-600 space-y-1"></ul>
+            </div>
+        </div>
+
+        <!-- Reglas de derivación -->
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-bold text-gray-800 mb-2">📌 Reglas usadas:</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+                <li>• Derivada de constante: \( \frac{d}{dx}(c) = 0 \)</li>
+                <li>• Regla de potencia: \( \frac{d}{dx}(x^n) = n \cdot x^{n-1} \)</li>
+                <li>• Regla de la suma/resta: \( \frac{d}{dx}(f \pm g) = f' \pm g' \)</li>
+                <li>• Factor constante: \( \frac{d}{dx}(c \cdot f) = c \cdot f' \)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function calcularDerivada() {
+            const funcionInput = document.getElementById('funcion').value.trim();
+            if (!funcionInput) {
+                alert('Por favor ingresa una función');
+                return;
+            }
+
+            // Normalizar entrada
+            let funcion = funcionInput.replace(/\s+/g, '')
+                                     .replace(/\^/g, '**')
+                                     .replace(/x/g, 'x');
+
+            // Descomponer términos
+            let terminos = funcion.match(/[+-]?[^+-]+/g) || [];
+            let derivadaTerminos = [];
+            let pasos = [];
+
+            terminos.forEach(termino => {
+                let t = termino.trim();
+                let coef, exp;
+
+                // Caso: constante numérica
+                if (!t.includes('x')) {
+                    derivadaTerminos.push('0');
+                    pasos.push(`La derivada de la constante ${t} es 0`);
+                }
+                // Caso: término con x
+                else {
+                    // Extraer coeficiente
+                    let coefMatch = t.match(/^([+-]?[\d.]*)x/);
+                    if (coefMatch) {
+                        if (coefMatch[1] === '' || coefMatch[1] === '+') coef = 1;
+                        else if (coefMatch[1] === '-') coef = -1;
+                        else coef = parseFloat(coefMatch[1]);
+                    }
+
+                    // Extraer exponente
+                    let expMatch = t.match(/x\*\*(\d+(\.\d+)?)|x(\^(\d+(\.\d+)?)|$)/);
+                    if (expMatch) {
+                        if (expMatch[1]) exp = parseFloat(expMatch[1]);
+                        else if (expMatch[4]) exp = parseFloat(expMatch[4]);
+                        else exp = 1; // x¹ = x
+                    }
+
+                    // Aplicar regla de potencia
+                    let nuevoCoef = coef * exp;
+                    let nuevoExp = exp - 1;
+
+                    if (nuevoExp === 0) {
+                        derivadaTerminos.push(`${nuevoCoef}`);
+                        pasos.push(`Derivada de ${termino}: ${coef}·${exp}·x^{${exp}-1} = ${nuevoCoef}`);
+                    } else if (nuevoExp === 1) {
+                        derivadaTerminos.push(`${nuevoCoef}x`);
+                        pasos.push(`Derivada de ${termino}: ${coef}·${exp}·x^{${exp}-1} = ${nuevoCoef}x`);
+                    } else {
+                        derivadaTerminos.push(`${nuevoCoef}x^${nuevoExp}`);
+                        pasos.push(`Derivada de ${termino}: ${coef}·${exp}·x^{${exp}-1} = ${nuevoCoef}x^${nuevoExp}`);
+                    }
+                }
+            });
+
+            // Limpiar resultado (quitar ceros innecesarios)
+            let resultadoFinal = derivadaTerminos
+                .filter(t => t !== '0')
+                .join(' + ')
+                .replace(/\+ -/g, '- ')
+                .replace(/^\+ /g, '');
+
+            if (resultadoFinal === '') resultadoFinal = '0';
+
+            // Mostrar en pantalla
+            document.getElementById('funcionOriginal').textContent = funcionInput;
+            document.getElementById('derivadaResultado').textContent = resultadoFinal;
+            
+            const listaPasos = document.getElementById('pasosExplicacion');
+            listaPasos.innerHTML = '';
+            pasos.forEach(p => {
+                const li = document.createElement('li');
+                li.textContent = p;
+                listaPasos.appendChild(li);
+            });
+
+            document.getElementById('resultado').classList.remove('hidden');
+            MathJax.typesetPromise(); // Renderizar fórmulas matemáticas
+        }
+    </script>
+</body>
+</html>
